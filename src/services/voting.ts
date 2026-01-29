@@ -1,0 +1,62 @@
+import { doc, updateDoc, arrayUnion, arrayRemove, runTransaction, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { Vote } from '../types/models';
+
+const getVoteRef = (sessionId: string, restaurantId: string) =>
+    doc(db, "sessions", sessionId, "votes", restaurantId);
+
+export const castVote = async (sessionId: string, restaurantId: string, uid: string, type: 'approve' | 'veto' | 'neutral') => {
+    const voteRef = getVoteRef(sessionId, restaurantId);
+
+    // We ideally use a transaction to ensure we don't have both approve and veto
+    // But for MVP, we just do sequential updates or array ops. 
+    // arrayRemove is safe to call even if not present.
+
+    // Using transaction is better to ensure atomic switching
+    await runTransaction(db, async (transaction) => {
+        const voteDoc = await transaction.get(voteRef);
+
+        let approvals: string[] = [];
+        let vetoes: string[] = [];
+
+        if (voteDoc.exists()) {
+            const data = voteDoc.data() as Vote;
+            approvals = data.approvals || [];
+            vetoes = data.vetoes || [];
+        }
+
+        // Remove from both first
+        const newApprovals = approvals.filter(id => id !== uid);
+        const newVetoes = vetoes.filter(id => id !== uid);
+
+        if (type === 'approve') {
+            newApprovals.push(uid);
+        } else if (type === 'veto') {
+            newVetoes.push(uid);
+        }
+
+        transaction.set(voteRef, {
+            restaurantId,
+            approvals: newApprovals,
+            vetoes: newVetoes,
+            updatedAt: Date.now()
+        }, { merge: true });
+    });
+};
+
+export const subscribeToVotes = (sessionId: string, restaurantId: string, onUpdate: (vote: Vote) => void) => {
+    return onSnapshot(getVoteRef(sessionId, restaurantId), (docSnap) => {
+        if (docSnap.exists()) {
+            onUpdate(docSnap.data() as Vote);
+        } else {
+            onUpdate({ restaurantId, approvals: [], vetoes: [] });
+        }
+    });
+};
+
+export const finalizeSession = async (sessionId: string, restaurantId: string) => {
+    await updateDoc(doc(db, "sessions", sessionId), {
+        status: "finalized",
+        finalizedRestaurantId: restaurantId
+    });
+};
