@@ -1,4 +1,4 @@
-export type GeoapifyPlace = {
+export type GeoapifyRestaurant = {
     id: string;
     name: string;
     cuisine: string | null;

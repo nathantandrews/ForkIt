@@ -1,4 +1,4 @@
-import { GeoapifyPlace } from "./geoapify.types";
+import { GeoapifyRestaurant } from "./geoapify.types";
 
 const GEOAPIFY_KEY = process.env.EXPO_PUBLIC_GEOAPIFY_KEY;
 
@@ -6,10 +6,10 @@ export async function fetchNearbyRestaurants(
     lat: number,
     lon: number,
     gridsize = 1, // how many more api queries in each direction
-    stepMeters = 400 // the spacing between queries in meters
-): Promise<GeoapifyPlace[]> {
+    stepMeters = 400 // the spacing between queries in meters (radius of query is 500)
+): Promise<GeoapifyRestaurant[]> {
     const offsets = generateOffsets(lat, lon, gridsize, stepMeters);
-    const results: GeoapifyPlace[] = [];
+    const results: GeoapifyRestaurant[] = [];
     for (const point of offsets) {
         const url =
             `https://api.geoapify.com/v2/place-details?` +
@@ -46,7 +46,7 @@ function generateOffsets(lat: number, lon: number, gridSize = 1, stepMeters = 40
     return offsets;
 }
 
-function normalizePlace(feature: any): GeoapifyPlace {
+function normalizePlace(feature: any): GeoapifyRestaurant {
     const p = feature.properties;
 
     return {
