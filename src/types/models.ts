@@ -26,7 +26,10 @@ export interface UserProfile {
 
 export interface User {
     uid: string;
-    displayName?: string;
+    email: string;
+    displayName: string;
+    createdAt: number;
+    updatedAt: number;
     profile: UserProfile;
 }
 
@@ -34,7 +37,7 @@ export interface SessionMember {
     uid: string;
     joinedAt: number;
     profileSnapshot: UserProfile;
-    displayName?: string;
+    displayName: string;
 }
 
 export interface SessionContext {

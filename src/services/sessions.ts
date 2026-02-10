@@ -1,7 +1,7 @@
 import {
     collection, doc, setDoc, getDocs, query, where,
     updateDoc, arrayUnion, onSnapshot, serverTimestamp,
-    Timestamp
+    Timestamp, getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Session, UserProfile, SessionMember } from '../types/models';
@@ -18,19 +18,18 @@ const generateCode = () => {
 
 export const createSession = async (hostUid: string, hostProfile: UserProfile): Promise<string> => {
     const code = generateCode();
-    const sessionId = code; // Using code as ID for simplicity, or generate separate ID. 
-    // Let's use separate ID to avoid collisions if we wanted, but for MVP code as ID is easiest 
-    // PROVIDING we check for collision.
-    // For this prototype, we'll assume low collision or just use auto-id and store code field.
-    // Let's use auto-id for doc, and query by code.
-
     const sessionRef = doc(collection(db, "sessions"));
     const now = Date.now();
+
+    // Fetch host's display name from Firestore
+    const userDoc = await getDoc(doc(db, "users", hostUid));
+    const displayName = userDoc.exists() ? userDoc.data().displayName || 'User' : 'User';
 
     const hostMember: SessionMember = {
         uid: hostUid,
         joinedAt: now,
-        profileSnapshot: hostProfile
+        profileSnapshot: hostProfile,
+        displayName: displayName
     };
 
     const newSession: Session = {
@@ -70,11 +69,16 @@ export const joinSession = async (code: string, uid: string, profile: UserProfil
         throw new Error("Session is closed");
     }
 
+    // Fetch user's display name from Firestore
+    const userDoc = await getDoc(doc(db, "users", uid));
+    const displayName = userDoc.exists() ? userDoc.data().displayName || 'User' : 'User';
+
     // Add to members
     const member: SessionMember = {
         uid,
         joinedAt: Date.now(),
-        profileSnapshot: profile
+        profileSnapshot: profile,
+        displayName: displayName
     };
 
     // Run as transaction or batch ideally, but sequential is fine for MVP

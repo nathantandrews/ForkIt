@@ -7,16 +7,17 @@ import { UserProfile } from '../types/models';
 
 export default function ProfileSetup() {
     const { user } = useAuth();
-    const { profile, loading, updateProfile } = useUserProfile(user?.uid);
+    const { profile, loading, displayName, updateProfile } = useUserProfile(user?.uid);
     const navigation = useNavigation<any>();
 
     const handleSave = async (newProfile: UserProfile) => {
         try {
             await updateProfile(newProfile);
-            Alert.alert("Success", "Profile saved!");
+            Alert.alert("Success", "Profile saved! Your preferences will be used for matching restaurants.");
             navigation.navigate("Home");
         } catch (e) {
-            Alert.alert("Error", "Failed to save profile.");
+            console.error('Profile save error:', e);
+            Alert.alert("Error", "Failed to save profile. Please try again.");
         }
     };
 

@@ -20,23 +20,39 @@ export default function SignUpScreen() {
 
         setLoading(true);
         try {
-            // 1. Create User
+            // 1. Create User Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Create Initial Profile in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-                email: user.email,
-                createdAt: Date.now(),
-                profile: { // Empty profile initially
-                    name: user.email?.split('@')[0] || 'User',
-                    preferences: {},
-                    constraints: {}
+            // 2. Create User Document in Firestore with proper UserProfile structure
+            const defaultProfile = {
+                hard: {
+                    allergies: [],
+                    dietary: []
+                },
+                soft: {
+                    likedCuisines: [],
+                    dislikedCuisines: [],
+                    distancePreference: "balanced" as const
+                },
+                weights: {
+                    cuisine: 3,
+                    price: 3,
+                    distance: 3
                 }
+            };
+
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.email?.split('@')[0] || 'User',
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                profile: defaultProfile
             });
 
-            // 3. Navigate (or let auth listener handle it)
-            // Auth listener in AppNavigator should pick this up and switch stacks
+            // 3. Navigate (auth listener will handle navigation)
+            // User will be redirected to ProfileSetup to complete their profile
         } catch (error: any) {
             Alert.alert("Sign Up Error", error.message);
         } finally {

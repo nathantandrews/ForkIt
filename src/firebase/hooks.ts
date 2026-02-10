@@ -26,6 +26,7 @@ export const useAuth = () => {
 export const useUserProfile = (uid: string | undefined) => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [displayName, setDisplayName] = useState<string>('');
 
     useEffect(() => {
         if (!uid) {
@@ -38,9 +39,14 @@ export const useUserProfile = (uid: string | undefined) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 setProfile(data.profile as UserProfile);
+                setDisplayName(data.displayName || data.email?.split('@')[0] || 'User');
             } else {
                 setProfile(null);
+                setDisplayName('');
             }
+            setLoading(false);
+        }, (error) => {
+            console.error('Error fetching user profile:', error);
             setLoading(false);
         });
 
@@ -48,13 +54,36 @@ export const useUserProfile = (uid: string | undefined) => {
     }, [uid]);
 
     const updateProfile = async (newProfile: UserProfile) => {
-        if (!uid) return;
+        if (!uid) {
+            throw new Error('No user ID provided');
+        }
         const ref = doc(db, 'users', uid);
-        await setDoc(ref, {
-            profile: newProfile,
-            updatedAt: Date.now()
-        }, { merge: true });
+        try {
+            await setDoc(ref, {
+                profile: newProfile,
+                updatedAt: Date.now()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            throw error;
+        }
     };
 
-    return { profile, loading, updateProfile };
+    const updateDisplayName = async (newDisplayName: string) => {
+        if (!uid) {
+            throw new Error('No user ID provided');
+        }
+        const ref = doc(db, 'users', uid);
+        try {
+            await setDoc(ref, {
+                displayName: newDisplayName,
+                updatedAt: Date.now()
+            }, { merge: true });
+        } catch (error) {
+            console.error('Error updating display name:', error);
+            throw error;
+        }
+    };
+
+    return { profile, loading, displayName, updateProfile, updateDisplayName };
 };
