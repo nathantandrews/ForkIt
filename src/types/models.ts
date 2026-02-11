@@ -59,12 +59,56 @@ export interface Session {
     finalizedRestaurantId?: string;
 }
 
+export type RestaurantDraft = {
+    name: string;
+    cuisines: string[];
+    location: {
+        lat: number;
+        lon: number;
+    };
+    priceTier?: 1 | 2 | 3 | 4;
+    avgPrice?: number;
+    distance?: number;
+    openHours?: Array<{
+        days: number[];
+        start: string;
+        end: string;
+    }>;
+    openHoursRaw?: string | null;
+
+    dietarySupport?: {
+        veganFriendly: boolean;
+        glutenFreeOptions: boolean;
+        halalOptions: boolean;
+        vegetarianFriendly: boolean;
+    };
+
+    allergens?: string[];
+    rating?: number;
+    
+    address?: {
+        street: string;
+        city?: string | null;
+        state?: string | null;
+        postcode?: string | null;
+        country?: string | null;
+    };
+    contact?: {
+        phone?: string | null;
+        website?: string | null;
+    };
+}
+
 export interface Restaurant {
     id: string;
     name: string;
     cuisines: string[];
     priceTier: 1 | 2 | 3 | 4;
     avgPrice?: number;
+    location: {
+        lat: number;
+        lon: number;
+    }
     distance: number; // relative to group center provided in context
     openHours: Array<{
         days: number[]; // 0=Sun, 6=Sat
@@ -79,6 +123,18 @@ export interface Restaurant {
     };
     allergens: string[];
     rating?: number;
+
+    address: {
+        street: string;
+        city?: string | null;
+        state?: string | null;
+        postcode?: string | null;
+        country?: string | null;
+    };
+    contact?: {
+        phone?: string | null; // "+1 234-567-8910"
+        website?: string | null;
+    };
 }
 
 export interface Vote {

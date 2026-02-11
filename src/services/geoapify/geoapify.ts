@@ -1,26 +1,33 @@
+import { kilometersToMeter, metersToLatDegrees, metersToLonDegrees } from "../../utils/restaurant/geo";
 import { GeoapifyRestaurant } from "./geoapify.types";
 
 const GEOAPIFY_KEY = process.env.EXPO_PUBLIC_GEOAPIFY_KEY;
 
-export async function fetchNearbyRestaurants(
+export async function fetchNearbyGeoapifyRestaurants(
     lat: number,
     lon: number,
-    gridsize = 1, // how many more api queries in each direction
-    stepMeters = 400 // the spacing between queries in meters (radius of query is 500)
+    radiusKm: number
 ): Promise<GeoapifyRestaurant[]> {
-    const offsets = generateOffsets(lat, lon, gridsize, stepMeters);
+    const queryRadiusMeters: 500 | 1000 = 1000; // only two radii sizes available for geoapify
+    const radiusMeters = kilometersToMeter(radiusKm);
+    const gridSize = Math.ceil(radiusMeters / queryRadiusMeters);
+    const stepMeters = queryRadiusMeters * Math.SQRT1_2;
+    const offsets = generateOffsets(lat, lon, gridSize, stepMeters);
     const results: GeoapifyRestaurant[] = [];
     for (const point of offsets) {
         const url =
             `https://api.geoapify.com/v2/place-details?` +
             `lat=${point.lat}&` +
             `lon=${point.lon}&` +
-            `features=radius_500.restaurant,details,radius_500&` +
+            `features=radius_${queryRadiusMeters}.restaurant,` + 
+            `details,radius_${queryRadiusMeters}&` +
             `apiKey=${GEOAPIFY_KEY}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Geoapify request failed");
         const json = await res.json();
-        const normalized = json.features.map(normalizePlace);
+        const normalized = json.features
+            .filter(isRestaurant)
+            .map(normalizeRestaurant);
         results.push(...normalized);
     }
 
@@ -32,8 +39,8 @@ export async function fetchNearbyRestaurants(
 }
 
 function generateOffsets(lat: number, lon: number, gridSize = 1, stepMeters = 400) {
-    const latStep = stepMeters / 111000; // convert meters to degrees
-    const lonStep = stepMeters / (111000 * Math.cos((lat * Math.PI) / 180));
+    const latStep = metersToLatDegrees(stepMeters);
+    const lonStep = metersToLonDegrees(stepMeters, lat);
 
     const offsets: { lat: number; lon: number }[] = [];
 
@@ -46,15 +53,27 @@ function generateOffsets(lat: number, lon: number, gridSize = 1, stepMeters = 40
     return offsets;
 }
 
-function normalizePlace(feature: any): GeoapifyRestaurant {
+function isRestaurant(feature: any): boolean {
     const p = feature.properties;
+    if (
+        !p.name || 
+        p.name.trim() === "" ||
+        !p.catering?.cuisine
+    ) { 
+        return false; 
+    }
+    return true;
+}
+
+function normalizeRestaurant(restaurant: any): GeoapifyRestaurant {
+    const p = restaurant.properties;
 
     return {
         id: p.place_id,
         name: p.name,
         cuisine: p.catering?.cuisine ?? null,
         categories: (p.categories ?? []).filter((c: string) =>
-            c.startsWith("catering.restaurant")
+            !c.startsWith("catering.restaurant")
         ),
         location: {
             lat: p.lat,
