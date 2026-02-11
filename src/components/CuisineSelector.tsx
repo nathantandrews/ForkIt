@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { CUISINES } from '../data/constants';
@@ -16,6 +15,11 @@ const CUISINE_ICONS: Record<string, string> = {
     "Seafood": "🦞", "Vegan": "🥗"
 };
 
+const { width } = Dimensions.get('window');
+const GAP = 10;
+// Use Math.floor to prevent sub-pixel rounding errors pushing the 3rd item to new row
+const ITEM_WIDTH = Math.floor((width - 40 - (GAP * 2)) / 3);
+
 export default function CuisineSelector({ selectedCuisines, onToggle }: Props) {
     return (
         <View style={styles.grid}>
@@ -29,7 +33,11 @@ export default function CuisineSelector({ selectedCuisines, onToggle }: Props) {
                         activeOpacity={0.7}
                     >
                         <Text style={styles.icon}>{CUISINE_ICONS[cuisine] || "🍽️"}</Text>
-                        <Text style={[styles.label, isSelected && styles.labelSelected]}>
+                        <Text 
+                            style={[styles.label, isSelected && styles.labelSelected]}
+                            numberOfLines={1} 
+                            adjustsFontSizeToFit // Ensures text like "Mediterranean" fits
+                        >
                             {cuisine}
                         </Text>
                     </TouchableOpacity>
@@ -38,10 +46,6 @@ export default function CuisineSelector({ selectedCuisines, onToggle }: Props) {
         </View>
     );
 }
-
-const { width } = Dimensions.get('window');
-const GAP = 10;
-const ITEM_WIDTH = (width - 40 - (GAP * 2)) / 3; // 3 columns, assuming 20px padding on container
 
 const styles = StyleSheet.create({
     grid: {
@@ -52,7 +56,7 @@ const styles = StyleSheet.create({
     },
     chip: {
         width: ITEM_WIDTH,
-        height: ITEM_WIDTH * 0.8,
+        height: ITEM_WIDTH * 0.85, // Adjust aspect ratio
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 12,
@@ -60,7 +64,7 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderColor: '#E5E5EA',
         padding: 5,
-        // Shadow for depth
+        // Shadow
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -68,21 +72,21 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     chipSelected: {
-        backgroundColor: '#E3F2FD', // Light blue bg
+        backgroundColor: '#E3F2FD',
         borderColor: '#007AFF',
     },
     icon: {
-        fontSize: 24,
+        fontSize: 22, // Slightly smaller to fit grid
         marginBottom: 4,
     },
     label: {
-        fontSize: 12,
+        fontSize: 11, // Smaller font for 3-column layout
         fontWeight: '500',
         color: '#333',
         textAlign: 'center',
     },
     labelSelected: {
-        color: '#007AFF', // Blue text
+        color: '#007AFF',
         fontWeight: '700',
     },
 });

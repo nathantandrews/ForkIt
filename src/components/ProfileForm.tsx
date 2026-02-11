@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { UserProfile, Weights } from '../types/models';
+import { UserProfile } from '../types/models';
 import { ALLERGIES, DIETARY_OPTS } from '../data/constants';
 import CuisineSelector from './CuisineSelector';
 import ConstraintSelector from './ConstraintSelector';
+import PriceSelector from './PriceSelector';
+import WeightedSlider from './WeightedSlider';
 
 interface Props {
     initialProfile: UserProfile | null;
@@ -14,8 +15,8 @@ interface Props {
 
 const DEFAULT_PROFILE: UserProfile = {
     hard: { allergies: [], dietary: [] },
-    soft: { likedCuisines: [], dislikedCuisines: [], distancePreference: "balanced" },
-    weights: { cuisine: 3, price: 3, distance: 3 }
+    soft: { likedCuisines: [], dislikedCuisines: [], targetPrice: [2] },
+    weights: { cuisine: 5, price: 5, distance: 5 }
 };
 
 export default function ProfileForm({ initialProfile, onSave, loading }: Props) {
@@ -23,7 +24,26 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 
     useEffect(() => {
         if (initialProfile) {
-            setProfile(initialProfile);
+            let safeTargetPrice = initialProfile.soft.targetPrice;
+            if (typeof safeTargetPrice === 'number') {
+                safeTargetPrice = [safeTargetPrice];
+            } else if (!safeTargetPrice || safeTargetPrice.length === 0) {
+                safeTargetPrice = [2]; 
+            }
+
+            setProfile({
+                ...DEFAULT_PROFILE,
+                ...initialProfile,
+                soft: { 
+                    ...DEFAULT_PROFILE.soft, 
+                    ...initialProfile.soft,
+                    targetPrice: safeTargetPrice 
+                },
+                weights: {
+                    ...DEFAULT_PROFILE.weights,
+                    ...initialProfile.weights
+                }
+            });
         }
     }, [initialProfile]);
 
@@ -45,6 +65,23 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
         }));
     };
 
+    const togglePrice = (price: number) => {
+        setProfile(p => {
+            const current = p.soft.targetPrice || [];
+            const updated = current.includes(price) 
+                ? current.filter(x => x !== price) 
+                : [...current, price];
+            return { ...p, soft: { ...p.soft, targetPrice: updated } };
+        });
+    };
+    
+    const updateWeight = (field: 'cuisine' | 'price' | 'distance', value: number) => {
+        setProfile(p => ({
+            ...p,
+            weights: { ...p.weights, [field]: value }
+        }));
+    };
+
     return (
         <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
@@ -53,7 +90,7 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 
             <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
 
-                {/* 1) CUISINE PREFERENCES (SOFT) */}
+                {/* 1) CUISINE PREFERENCES */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>🍽️</Text>
@@ -66,11 +103,64 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                         selectedCuisines={profile.soft.likedCuisines}
                         onToggle={updateLike}
                     />
+                    
+                    <View style={styles.sliderContainer}>
+                        <WeightedSlider 
+                            label="Importance (Cuisine)"
+                            value={profile.weights.cuisine}
+                            onValueChange={(v) => updateWeight('cuisine', v)}
+                        />
+                    </View>
                 </View>
 
                 <View style={styles.divider} />
 
-                {/* 2) DIETARY RESTRICTIONS (HARD) */}
+                {/* 2) PRICE PREFERENCE */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionIcon}>💸</Text>
+                        <View>
+                            <Text style={styles.sectionTitle}>Price Range</Text>
+                            <Text style={styles.sectionSubtitle}>Select all that apply</Text>
+                        </View>
+                    </View>
+                    <PriceSelector 
+                        selectedPrices={profile.soft.targetPrice || []} 
+                        onToggle={togglePrice} 
+                    />
+
+                    <View style={styles.sliderContainer}>
+                        <WeightedSlider 
+                            label="Importance (Budget)"
+                            value={profile.weights.price}
+                            onValueChange={(v) => updateWeight('price', v)}
+                        />
+                    </View>
+                </View>
+
+                <View style={styles.divider} />
+                
+                {/* 3) DISTANCE IMPORTANCE ONLY */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionIcon}>🚗</Text>
+                        <View>
+                            <Text style={styles.sectionTitle}>Distance</Text>
+                            <Text style={styles.sectionSubtitle}>Closer is better</Text>
+                        </View>
+                    </View>
+                    
+                    {/* Just the slider, no generic selector */}
+                    <WeightedSlider 
+                        label="Importance (Distance)"
+                        value={profile.weights.distance}
+                        onValueChange={(v) => updateWeight('distance', v)}
+                    />
+                </View>
+
+                <View style={styles.divider} />
+
+                {/* 4) HARD CONSTRAINTS (Dietary/Allergies) */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>🥗</Text>
@@ -87,15 +177,12 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                     />
                 </View>
 
-                <View style={styles.divider} />
-
-                {/* 3) ALLERGIES (HARD) */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>⚠️</Text>
                         <View>
                             <Text style={styles.sectionTitle}>Allergies</Text>
-                            <Text style={styles.sectionSubtitle}>Restaurants containing these will be excluded</Text>
+                            <Text style={styles.sectionSubtitle}>Strict exclusions</Text>
                         </View>
                     </View>
                     <ConstraintSelector
@@ -159,6 +246,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         marginTop: 2,
+    },
+    sliderContainer: {
+        marginTop: 15,
+        paddingTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
     },
     divider: {
         height: 1,

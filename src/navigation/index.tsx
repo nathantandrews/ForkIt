@@ -52,14 +52,14 @@ function AuthNavigator() {
 function AppNavigatorContent() {
     return (
         <AppStack.Navigator initialRouteName="Home">
-            <AppStack.Screen name="Home" component={Home} />
-            <AppStack.Screen name="ProfileSetup" component={ProfileSetup} />
-            <AppStack.Screen name="CreateSession" component={CreateSession} />
-            <AppStack.Screen name="JoinSession" component={JoinSession} />
-            <AppStack.Screen name="SessionLobby" component={SessionLobby} />
-            <AppStack.Screen name="Recommendations" component={Recommendations} />
-            <AppStack.Screen name="RestaurantDetail" component={RestaurantDetail} />
-            <AppStack.Screen name="FinalResult" component={FinalResult} />
+            <AppStack.Screen name="Home" component={Home} options={{ title: 'Create Session' }} />
+            <AppStack.Screen name="ProfileSetup" component={ProfileSetup} options={{ title: 'Profile Setup' }} />
+            <AppStack.Screen name="CreateSession" component={CreateSession} options={{ title: 'Create Session' }} />
+            <AppStack.Screen name="JoinSession" component={JoinSession} options={{ title: 'Join Session' }} />
+            <AppStack.Screen name="SessionLobby" component={SessionLobby} options={{ title: 'Session Lobby' }} />
+            <AppStack.Screen name="Recommendations" component={Recommendations} options={{ title: 'Recommendations' }} />
+            <AppStack.Screen name="RestaurantDetail" component={RestaurantDetail} options={{ title: 'Restaurant Details' }} />
+            <AppStack.Screen name="FinalResult" component={FinalResult} options={{ title: 'Final Result' }} />
         </AppStack.Navigator>
     );
 }

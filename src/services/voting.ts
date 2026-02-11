@@ -1,4 +1,4 @@
-import { doc, updateDoc, arrayUnion, arrayRemove, runTransaction, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, runTransaction, getDoc, onSnapshot, collection } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Vote } from '../types/models';
 
@@ -8,11 +8,6 @@ const getVoteRef = (sessionId: string, restaurantId: string) =>
 export const castVote = async (sessionId: string, restaurantId: string, uid: string, type: 'approve' | 'veto' | 'neutral') => {
     const voteRef = getVoteRef(sessionId, restaurantId);
 
-    // We ideally use a transaction to ensure we don't have both approve and veto
-    // But for MVP, we just do sequential updates or array ops. 
-    // arrayRemove is safe to call even if not present.
-
-    // Using transaction is better to ensure atomic switching
     await runTransaction(db, async (transaction) => {
         const voteDoc = await transaction.get(voteRef);
 
@@ -51,6 +46,18 @@ export const subscribeToVotes = (sessionId: string, restaurantId: string, onUpda
         } else {
             onUpdate({ restaurantId, approvals: [], vetoes: [] });
         }
+    });
+};
+
+// NEW: Listen to all votes for the entire session efficiently
+export const subscribeToSessionVotes = (sessionId: string, onUpdate: (votes: Record<string, Vote>) => void) => {
+    const colRef = collection(db, "sessions", sessionId, "votes");
+    return onSnapshot(colRef, (snapshot) => {
+        const allVotes: Record<string, Vote> = {};
+        snapshot.forEach((doc) => {
+            allVotes[doc.id] = doc.data() as Vote;
+        });
+        onUpdate(allVotes);
     });
 };
 
