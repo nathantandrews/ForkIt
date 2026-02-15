@@ -23,7 +23,8 @@ export default function FinalResult() {
 
     if (!session || !session.finalizedRestaurantId) return <View style={styles.container}><Text>Waiting for results...</Text></View>;
 
-    const winner = RESTAURANTS.find(r => r.id === session.finalizedRestaurantId);
+    // Use stored restaurant or fallback to hardcoded list
+    const winner = session.finalizedRestaurant || RESTAURANTS.find(r => r.id === session.finalizedRestaurantId);
 
     return (
         <View style={styles.container}>
@@ -33,7 +34,6 @@ export default function FinalResult() {
             <View style={styles.card}>
                 <Text style={styles.name}>{winner?.name}</Text>
                 <Text style={styles.details}>{winner?.cuisines.join(", ")} • {'$'.repeat(winner?.priceTier || 1)}</Text>
-                <Text style={styles.hours}>Open today until...</Text>
             </View>
 
             <TouchableOpacity style={styles.btn} onPress={handleHome}>

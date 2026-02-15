@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../firebase/hooks';
 import { subscribeToSession, subscribeToMembers } from '../services/sessions';
@@ -10,13 +10,14 @@ import { Vote, Session, SessionMember, RecommendationResult } from '../types/mod
 export default function RestaurantDetail() {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
-    const { sessionId, restaurantId } = route.params;
+    const { sessionId, restaurantId, restaurantData } = route.params;
     const { user } = useAuth();
 
     const [session, setSession] = useState<Session | null>(null);
     const [members, setMembers] = useState<SessionMember[]>([]);
     const [vote, setVote] = useState<Vote>({ restaurantId, approvals: [], vetoes: [] });
-    const [rec, setRec] = useState<RecommendationResult | null>(null);
+    const [rec, setRec] = useState<RecommendationResult | null>(restaurantData || null);
+    const [loading, setLoading] = useState(!restaurantData);
 
     useEffect(() => {
         const unsubSession = subscribeToSession(sessionId, (s) => {
@@ -31,16 +32,24 @@ export default function RestaurantDetail() {
     }, [sessionId, restaurantId]);
 
     useEffect(() => {
-        if (session && members.length > 0) {
-            // Re-run recommender to get specific explanation/score for this restaurant
-            // Optimally, pass this via params, but param size limits can be tricky with complex objects. 
-            // Re-calcing is cheap.
+        // Only fetch if we don't have restaurant data already
+        if (!restaurantData && session && members.length > 0) {
+            setLoading(true);
             const profiles = members.map(m => m.profileSnapshot);
-            const results = recommendRestaurants(profiles, session.context);
-            const found = results.find(r => r.restaurant.id === restaurantId);
-            setRec(found || null);
+            recommendRestaurants(profiles, session.context).then(results => {
+                const found = results.find(r => r.restaurant.id === restaurantId);
+                if (!found) {
+                    console.warn('Restaurant not found in recommendations:', restaurantId);
+                }
+                setRec(found || null);
+                setLoading(false);
+            }).catch(error => {
+                console.error('Error fetching restaurant details:', error);
+                setRec(null);
+                setLoading(false);
+            });
         }
-    }, [session, members, restaurantId]);
+    }, [session, members, restaurantId, restaurantData]);
 
     const handleVote = (type: 'approve' | 'veto') => {
         if (!user) return;
@@ -50,15 +59,33 @@ export default function RestaurantDetail() {
     };
 
     const handleFinalize = async () => {
+        if (!rec?.restaurant) {
+            Alert.alert("Error", "Restaurant data not available");
+            return;
+        }
         try {
-            await finalizeSession(sessionId, restaurantId);
+            console.log('Finalizing session:', sessionId, 'with restaurant:', restaurantId);
+            await finalizeSession(sessionId, restaurantId, rec.restaurant);
             // Sub listener will redirect
-        } catch (e) {
-            Alert.alert("Error", "Could not finalize");
+        } catch (e: any) {
+            console.error('Finalize error:', e?.code, e?.message, e);
+            Alert.alert("Error", `Could not finalize: ${e?.message || 'Unknown error'}`);
         }
     };
 
-    if (!rec || !session) return <View style={styles.container}><Text>Loading...</Text></View>;
+    if (loading) {
+        return <View style={styles.container}><ActivityIndicator size="large" /><Text style={{ marginTop: 10 }}>Loading...</Text></View>;
+    }
+
+    if (!rec || !session) {
+        return (
+            <View style={styles.container}>
+                <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', padding: 20 }}>
+                    Restaurant not found in recommendations.{'\n'}Please go back and try another option.
+                </Text>
+            </View>
+        );
+    }
 
     const isHost = user?.uid === session.hostUid;
     const approvalCount = vote.approvals.length;

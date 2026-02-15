@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Share } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Session, SessionMember } from '../types/models';
-import { subscribeToSession, subscribeToMembers } from '../services/sessions';
+import { subscribeToSession, subscribeToMembers, updateSessionStatus } from '../services/sessions';
 import { useAuth } from '../firebase/hooks';
 
 export default function SessionLobby() {
@@ -23,8 +23,16 @@ export default function SessionLobby() {
         };
     }, [sessionId]);
 
-    const handleStart = () => {
-        navigation.navigate("Recommendations", { sessionId });
+    // Navigate non-hosts to recommendations when status changes
+    useEffect(() => {
+        if (session && session.status === "voting" && user?.uid !== session.hostUid) {
+            navigation.replace("Recommendations", { sessionId });
+        }
+    }, [session?.status]);
+
+    const handleStart = async () => {
+        await updateSessionStatus(sessionId, "voting");
+        navigation.replace("Recommendations", { sessionId });
     };
 
     if (!session) return <View style={styles.container}><Text>Loading...</Text></View>;

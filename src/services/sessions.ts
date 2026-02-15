@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Session, UserProfile, SessionMember } from '../types/models';
+import { getCurrentLocation } from './location';
 
 // Generate a random 6-character code
 const generateCode = () => {
@@ -20,6 +21,16 @@ export const createSession = async (hostUid: string, hostProfile: UserProfile): 
     const code = generateCode();
     const sessionRef = doc(collection(db, "sessions"));
     const now = Date.now();
+
+    // Get current location
+    let location = { lat: 37.7749, lng: -122.4194 }; // Default SF
+    try {
+        const currentLoc = await getCurrentLocation();
+        location = { lat: currentLoc.lat, lng: currentLoc.lon };
+        console.log('Using current location:', location);
+    } catch (error) {
+        console.warn('Could not get current location, using default SF:', error);
+    }
 
     // Fetch host's display name from Firestore
     const userDoc = await getDoc(doc(db, "users", hostUid));
@@ -40,7 +51,8 @@ export const createSession = async (hostUid: string, hostProfile: UserProfile): 
         context: {
             timeOfDay: "dinner", // default
             now: now,
-            location: { lat: 37.7749, lng: -122.4194 } // default SF
+            location: location,
+            radius: 5000 // 5km in meters
         },
         memberUids: [hostUid],
     };
@@ -82,12 +94,18 @@ export const joinSession = async (code: string, uid: string, profile: UserProfil
     };
 
     // Run as transaction or batch ideally, but sequential is fine for MVP
-    await setDoc(doc(db, "sessions", sessionId, "members", uid), member);
-
-    // Update memberUids array on main doc for easy count/access
-    await updateDoc(doc(db, "sessions", sessionId), {
-        memberUids: arrayUnion(uid)
-    });
+    try {
+        console.log("Adding member to subcollection:", sessionId, uid);
+        await setDoc(doc(db, "sessions", sessionId, "members", uid), member);
+        
+        console.log("Updating memberUids array");
+        await updateDoc(doc(db, "sessions", sessionId), {
+            memberUids: arrayUnion(uid)
+        });
+    } catch (error: any) {
+        console.error("Error in joinSession:", error.code, error.message);
+        throw error;
+    }
 
     return sessionId;
 };
@@ -107,4 +125,8 @@ export const subscribeToMembers = (sessionId: string, onUpdate: (members: Sessio
         const members = snapshot.docs.map(d => d.data() as SessionMember);
         onUpdate(members);
     });
+};
+
+export const updateSessionStatus = async (sessionId: string, status: string) => {
+    await updateDoc(doc(db, "sessions", sessionId), { status });
 };

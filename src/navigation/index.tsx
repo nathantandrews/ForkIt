@@ -59,7 +59,7 @@ function AppNavigatorContent() {
             <AppStack.Screen name="SessionLobby" component={SessionLobby} options={{ title: 'Session Lobby' }} />
             <AppStack.Screen name="Recommendations" component={Recommendations} options={{ title: 'Recommendations' }} />
             <AppStack.Screen name="RestaurantDetail" component={RestaurantDetail} options={{ title: 'Restaurant Details' }} />
-            <AppStack.Screen name="FinalResult" component={FinalResult} options={{ title: 'Final Result' }} />
+            <AppStack.Screen name="FinalResult" component={FinalResult} options={{ title: 'Final Result', headerLeft: () => null }} />
         </AppStack.Navigator>
     );
 }

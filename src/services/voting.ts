@@ -61,9 +61,15 @@ export const subscribeToSessionVotes = (sessionId: string, onUpdate: (votes: Rec
     });
 };
 
-export const finalizeSession = async (sessionId: string, restaurantId: string) => {
+export const finalizeSession = async (sessionId: string, restaurantId: string, restaurant: any) => {
+    // Clean the restaurant object by removing undefined values and converting to plain object
+    const cleanRestaurant = JSON.parse(JSON.stringify(restaurant || {}));
+    
+    console.log('Finalizing with cleaned restaurant:', cleanRestaurant);
+    
     await updateDoc(doc(db, "sessions", sessionId), {
         status: "finalized",
-        finalizedRestaurantId: restaurantId
+        finalizedRestaurantId: restaurantId,
+        finalizedRestaurant: cleanRestaurant
     });
 };

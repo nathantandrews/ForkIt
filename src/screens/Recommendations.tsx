@@ -26,22 +26,34 @@ export default function Recommendations() {
         return () => { unsubSession(); unsubMembers(); unsubVotes(); };
     }, [sessionId]);
 
+    // Navigate to FinalResult when session is finalized
+    useEffect(() => {
+        if (session?.status === "finalized" && session.finalizedRestaurantId) {
+            navigation.replace("FinalResult", { sessionId });
+        }
+    }, [session?.status, session?.finalizedRestaurantId]);
+
     useEffect(() => {
         if (session && members.length > 0) {
             generate();
         }
     }, [session, members]);
 
-    const generate = () => {
+    const generate = async () => {
         if (!session) return;
         const profiles = members.map(m => m.profileSnapshot);
-        const recs = recommendRestaurants(profiles, session.context);
+        const recs = await recommendRestaurants(profiles, session.context);
         setResults(recs);
         setLoading(false);
     };
 
     const handleSelect = (r: RecommendationResult) => {
-        navigation.navigate("RestaurantDetail", { restaurantId: r.restaurant.id, sessionId });
+        // Pass the full recommendation result to avoid re-fetching
+        navigation.navigate("RestaurantDetail", { 
+            restaurantId: r.restaurant.id, 
+            sessionId,
+            restaurantData: r // Pass the full result
+        });
     };
 
     if (loading) return <View style={styles.centered}><ActivityIndicator /></View>;
@@ -68,6 +80,7 @@ export default function Recommendations() {
                                 <Text style={styles.name}>{item.restaurant.name}</Text>
                                 <Text style={styles.meta}>
                                     {item.restaurant.cuisines.join(", ")} • {'$'.repeat(item.restaurant.priceTier)} • {item.restaurant.rating}★
+                                    {item.restaurant.distance ? ` • ${(item.restaurant.distance * 0.621371).toFixed(1)} mi` : ''}
                                 </Text>
                                 
                                 {/* Vote Counts Row */}

@@ -80,16 +80,19 @@ export interface Restaurant {
         halalOptions: boolean;
     };
     allergens: string[];
+    distance?: number; // in kilometers
     image?: string;
 }
 
 export interface Session {
     id: string;
     hostUid: string;
-    status: 'lobby' | 'active' | 'finalized';
+    status: 'lobby' | 'active' | 'finalized' | 'voting';
     code: string;
     context: SessionContext;
     finalizedRestaurantId?: string;
+    finalizedRestaurant?: Restaurant;
+    memberUids: string[];
 }
 
 export interface SessionContext {
