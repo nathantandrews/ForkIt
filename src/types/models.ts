@@ -26,6 +26,45 @@ export interface PreferenceWeights {
     distance: number; // 1-10
 }
 
+export type RestaurantDraft = {
+    name: string;
+    cuisines: string[];
+    location: {
+        lat: number;
+        lon: number;
+    };
+    priceTier?: 1 | 2 | 3 | 4;
+    avgPrice?: number;
+    distance?: number;
+    openHours?: Array<{
+        days: number[];
+        start: string;
+        end: string;
+    }>;
+    openHoursRaw?: string | null;
+
+    dietarySupport?: {
+        veganFriendly: boolean;
+        glutenFreeOptions: boolean;
+        halalOptions: boolean;
+        vegetarianFriendly: boolean;
+    };
+
+    allergens?: string[];
+    rating?: number;
+    address?: {
+        street: string;
+        city?: string | null;
+        state?: string | null;
+        postcode?: string | null;
+        country?: string | null;
+    };
+    contact?: {
+        phone?: string | null;
+        website?: string | null;
+    };
+}
+
 export interface Restaurant {
     id: string;
     name: string;
