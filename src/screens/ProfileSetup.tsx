@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth, useUserProfile } from '../firebase/hooks';
 import ProfileForm from '../components/ProfileForm';
 import { UserProfile } from '../types/models';
+import { theme } from '../utils/theme';
 
 export default function ProfileSetup() {
     const { user } = useAuth();
@@ -26,12 +27,12 @@ export default function ProfileSetup() {
             <ProfileForm
                 initialProfile={profile}
                 onSave={handleSave}
-                loading={loading && !profile} // Only load if full initial load
+                loading={loading && !profile}
             />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' }
+    container: { flex: 1, backgroundColor: theme.colors.background }
 });

@@ -1,9 +1,4 @@
 import type { Restaurant } from "../../types/models";
-
-/**
- * Parses a simple time range string like "05:30-22:00"
- * and applies it to all days of the week.
- */
 export function parseHoursString(
     hoursStr: string | null
 ): Restaurant["openHours"] | undefined {

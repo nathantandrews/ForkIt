@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator,
 import { useNavigation } from '@react-navigation/native';
 import { useAuth, useUserProfile } from '../firebase/hooks';
 import { joinSession } from '../services/sessions';
+import { theme } from '../utils/theme';
 
 export default function JoinSession() {
     const navigation = useNavigation<any>();
@@ -34,22 +35,27 @@ export default function JoinSession() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Join Session</Text>
-            <Text style={styles.desc}>Enter the 6-character code:</Text>
+            <View style={styles.header}>
+                <Text style={styles.icon}>🤝</Text>
+                <Text style={styles.title}>Join Session</Text>
+                <Text style={styles.desc}>Enter the 6-character group code</Text>
+            </View>
 
             <TextInput
                 style={styles.input}
-                placeholder="ABC123"
+                placeholder="ABC 123"
+                placeholderTextColor={theme.colors.textMuted}
                 value={code}
-                onChangeText={t => setCode(t.toUpperCase())}
+                onChangeText={t => setCode(t.toUpperCase().replace(/\s/g, ''))}
                 maxLength={6}
                 autoCapitalize="characters"
+                autoCorrect={false}
             />
 
             {joining ? (
-                <ActivityIndicator size="large" />
+                <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
             ) : (
-                <TouchableOpacity style={styles.btn} onPress={handleJoin}>
+                <TouchableOpacity style={styles.btn} onPress={handleJoin} activeOpacity={0.8}>
                     <Text style={styles.btnText}>Join Group</Text>
                 </TouchableOpacity>
             )}
@@ -58,10 +64,54 @@ export default function JoinSession() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-    desc: { fontSize: 16, color: '#666', marginBottom: 20 },
-    input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 15, fontSize: 24, letterSpacing: 5, width: '80%', textAlign: 'center', marginBottom: 30 },
-    btn: { backgroundColor: '#333', padding: 15, borderRadius: 10, width: '80%', alignItems: 'center' },
-    btnText: { color: 'white', fontSize: 18, fontWeight: 'bold' }
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: theme.spacing.xl,
+        backgroundColor: theme.colors.background,
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: theme.spacing.xxl,
+    },
+    icon: {
+        fontSize: theme.typography.sizes.hero,
+        marginBottom: theme.spacing.md,
+    },
+    title: {
+        fontSize: theme.typography.sizes.xxl,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.textMain,
+        marginBottom: theme.spacing.sm,
+    },
+    desc: {
+        fontSize: theme.typography.sizes.md,
+        color: theme.colors.textMuted,
+        textAlign: 'center',
+    },
+    input: {
+        backgroundColor: theme.colors.surface,
+        borderWidth: 2,
+        borderColor: theme.colors.border,
+        borderRadius: theme.radii.lg,
+        padding: theme.spacing.lg,
+        fontSize: theme.typography.sizes.xxl,
+        fontWeight: theme.typography.weights.bold,
+        letterSpacing: 8,
+        textAlign: 'center',
+        marginBottom: theme.spacing.xl,
+        color: theme.colors.textMain,
+    },
+    btn: {
+        backgroundColor: theme.colors.textMain,
+        paddingVertical: theme.spacing.md,
+        borderRadius: theme.radii.md,
+        alignItems: 'center',
+        ...theme.shadows.sm,
+    },
+    btnText: {
+        color: '#fff',
+        fontSize: theme.typography.sizes.lg,
+        fontWeight: theme.typography.weights.semibold,
+    }
 });

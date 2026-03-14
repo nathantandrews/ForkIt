@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { CUISINES } from '../data/constants';
+import { theme } from '../utils/theme';
 
 interface Props {
     selectedCuisines: string[];
@@ -16,9 +17,8 @@ const CUISINE_ICONS: Record<string, string> = {
 };
 
 const { width } = Dimensions.get('window');
-const GAP = 10;
-// Use Math.floor to prevent sub-pixel rounding errors pushing the 3rd item to new row
-const ITEM_WIDTH = Math.floor((width - 40 - (GAP * 2)) / 3);
+const GAP = theme.spacing.sm;
+const ITEM_WIDTH = Math.floor((width - (theme.spacing.xl * 2) - (GAP * 2)) / 3);
 
 export default function CuisineSelector({ selectedCuisines, onToggle }: Props) {
     return (
@@ -33,10 +33,10 @@ export default function CuisineSelector({ selectedCuisines, onToggle }: Props) {
                         activeOpacity={0.7}
                     >
                         <Text style={styles.icon}>{CUISINE_ICONS[cuisine] || "🍽️"}</Text>
-                        <Text 
+                        <Text
                             style={[styles.label, isSelected && styles.labelSelected]}
-                            numberOfLines={1} 
-                            adjustsFontSizeToFit // Ensures text like "Mediterranean" fits
+                            numberOfLines={1}
+                            adjustsFontSizeToFit //ensures text like "Mediterranean" fits
                         >
                             {cuisine}
                         </Text>
@@ -56,37 +56,33 @@ const styles = StyleSheet.create({
     },
     chip: {
         width: ITEM_WIDTH,
-        height: ITEM_WIDTH * 0.85, // Adjust aspect ratio
+        height: ITEM_WIDTH * 0.85,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 12,
-        backgroundColor: '#fff',
+        borderRadius: theme.radii.lg,
+        backgroundColor: theme.colors.surface,
         borderWidth: 1.5,
-        borderColor: '#E5E5EA',
-        padding: 5,
-        // Shadow
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+        borderColor: theme.colors.border,
+        padding: theme.spacing.xs,
+        ...theme.shadows.sm,
     },
     chipSelected: {
-        backgroundColor: '#E3F2FD',
-        borderColor: '#007AFF',
+        backgroundColor: theme.colors.primaryLight + '20',
+        borderColor: theme.colors.primary,
+        ...theme.shadows.md,
     },
     icon: {
-        fontSize: 22, // Slightly smaller to fit grid
-        marginBottom: 4,
+        fontSize: theme.typography.sizes.xl,
+        marginBottom: theme.spacing.xs,
     },
     label: {
-        fontSize: 11, // Smaller font for 3-column layout
-        fontWeight: '500',
-        color: '#333',
+        fontSize: theme.typography.sizes.xs,
+        fontWeight: theme.typography.weights.medium,
+        color: theme.colors.textMain,
         textAlign: 'center',
     },
     labelSelected: {
-        color: '#007AFF',
-        fontWeight: '700',
+        color: theme.colors.primaryDark,
+        fontWeight: theme.typography.weights.bold,
     },
 });

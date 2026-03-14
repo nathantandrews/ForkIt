@@ -6,6 +6,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
 
+import { theme } from '../utils/theme';
+
 export default function SignUpScreen() {
     const navigation = useNavigation<any>();
     const [email, setEmail] = useState('');
@@ -62,35 +64,45 @@ export default function SignUpScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Create Account</Text>
+            <View style={styles.header}>
+                <Text style={styles.logo}>👋</Text>
+                <Text style={styles.title}>Create Account</Text>
+                <Text style={styles.subtitle}>Join ForkIt to start grouping up!</Text>
+            </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
+            <View style={styles.formContainer}>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor={theme.colors.textMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
 
-            {loading ? (
-                <ActivityIndicator size="large" color="#FF3B30" />
-            ) : (
-                <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-                    <Text style={styles.buttonText}>Sign Up</Text>
+                {loading ? (
+                    <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
+                ) : (
+                    <TouchableOpacity style={styles.button} onPress={handleSignUp} activeOpacity={0.8}>
+                        <Text style={styles.buttonText}>Sign Up</Text>
+                    </TouchableOpacity>
+                )}
+
+                <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkButton}>
+                    <Text style={styles.linkText}>
+                        Already have an account? <Text style={styles.linkTextHighlight}>Login</Text>
+                    </Text>
                 </TouchableOpacity>
-            )}
-
-            <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkButton}>
-                <Text style={styles.linkText}>Already have an account? Login</Text>
-            </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -98,42 +110,65 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: theme.colors.background,
+        paddingHorizontal: theme.spacing.xl,
         justifyContent: 'center',
-        padding: 20,
-        backgroundColor: '#fff',
+    },
+    header: {
+        alignItems: 'center',
+        marginBottom: theme.spacing.xxl,
+    },
+    logo: {
+        fontSize: theme.typography.sizes.hero,
+        marginBottom: theme.spacing.md,
     },
     title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginBottom: 40,
+        fontSize: theme.typography.sizes.xxl,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.textMain,
+        marginBottom: theme.spacing.sm,
+    },
+    subtitle: {
+        fontSize: theme.typography.sizes.md,
+        color: theme.colors.textMuted,
         textAlign: 'center',
-        color: '#333',
+    },
+    formContainer: {
+        width: '100%',
     },
     input: {
-        backgroundColor: '#f5f5f5',
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-        fontSize: 16,
+        backgroundColor: theme.colors.surface,
+        padding: theme.spacing.md,
+        borderRadius: theme.radii.md,
+        marginBottom: theme.spacing.md,
+        fontSize: theme.typography.sizes.md,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        color: theme.colors.textMain,
     },
     button: {
-        backgroundColor: '#FF3B30',
-        padding: 15,
-        borderRadius: 10,
+        backgroundColor: theme.colors.primary,
+        paddingVertical: theme.spacing.md,
+        borderRadius: theme.radii.md,
         alignItems: 'center',
-        marginTop: 10,
+        marginTop: theme.spacing.sm,
+        ...theme.shadows.sm,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: theme.typography.sizes.lg,
+        fontWeight: theme.typography.weights.semibold,
     },
     linkButton: {
-        marginTop: 20,
+        marginTop: theme.spacing.xl,
         alignItems: 'center',
     },
     linkText: {
-        color: '#007AFF',
-        fontSize: 16,
+        color: theme.colors.textMuted,
+        fontSize: theme.typography.sizes.md,
+    },
+    linkTextHighlight: {
+        color: theme.colors.primary,
+        fontWeight: theme.typography.weights.semibold,
     },
 });

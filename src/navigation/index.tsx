@@ -5,7 +5,6 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { useAuth, useUserProfile } from '../firebase/hooks';
 
-// Placeholder Screens (will replace with real imports)
 import ProfileSetup from '../screens/ProfileSetup';
 import Home from '../screens/Home';
 import CreateSession from '../screens/CreateSession';
@@ -14,13 +13,6 @@ import SessionLobby from '../screens/SessionLobby';
 import Recommendations from '../screens/Recommendations';
 import RestaurantDetail from '../screens/RestaurantDetail';
 import FinalResult from '../screens/FinalResult';
-
-// Temporary placeholders to build navigation structure
-// const PlaceholderScreen = ({ name }: { name: string }) => (
-//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//         <ActivityIndicator />
-//     </View>
-// );
 
 export type RootStackParamList = {
     ProfileSetup: undefined;
@@ -37,12 +29,29 @@ export type RootStackParamList = {
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 
+import { theme } from '../utils/theme';
+
 const AuthStack = createStackNavigator();
 const AppStack = createStackNavigator<RootStackParamList>();
 
+const defaultScreenOptions = {
+    headerStyle: {
+        backgroundColor: theme.colors.background,
+        elevation: 0,
+        shadowOpacity: 0,
+        borderBottomWidth: 0,
+    },
+    headerTintColor: theme.colors.textMain,
+    headerTitleStyle: {
+        fontWeight: '700' as const,
+        fontSize: theme.typography.sizes.lg,
+    },
+    cardStyle: { backgroundColor: theme.colors.background },
+};
+
 function AuthNavigator() {
     return (
-        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+        <AuthStack.Navigator screenOptions={{ ...defaultScreenOptions, headerShown: false }}>
             <AuthStack.Screen name="Login" component={LoginScreen} />
             <AuthStack.Screen name="SignUp" component={SignUpScreen} />
         </AuthStack.Navigator>
@@ -51,15 +60,23 @@ function AuthNavigator() {
 
 function AppNavigatorContent() {
     return (
-        <AppStack.Navigator initialRouteName="Home">
-            <AppStack.Screen name="Home" component={Home} options={{ title: 'Create Session' }} />
+        <AppStack.Navigator initialRouteName="Home" screenOptions={defaultScreenOptions}>
+            <AppStack.Screen name="Home" component={Home} options={{ headerShown: false }} />
             <AppStack.Screen name="ProfileSetup" component={ProfileSetup} options={{ title: 'Profile Setup' }} />
             <AppStack.Screen name="CreateSession" component={CreateSession} options={{ title: 'Create Session' }} />
             <AppStack.Screen name="JoinSession" component={JoinSession} options={{ title: 'Join Session' }} />
-            <AppStack.Screen name="SessionLobby" component={SessionLobby} options={{ title: 'Session Lobby' }} />
+            <AppStack.Screen name="SessionLobby" component={SessionLobby} options={{ title: 'Wait for friends' }} />
             <AppStack.Screen name="Recommendations" component={Recommendations} options={{ title: 'Recommendations' }} />
-            <AppStack.Screen name="RestaurantDetail" component={RestaurantDetail} options={{ title: 'Restaurant Details' }} />
-            <AppStack.Screen name="FinalResult" component={FinalResult} options={{ title: 'Final Result', headerLeft: () => null }} />
+            <AppStack.Screen
+                name="RestaurantDetail"
+                component={RestaurantDetail}
+                options={{
+                    title: 'Details',
+                    headerStyle: { backgroundColor: theme.colors.primary, elevation: 0, shadowOpacity: 0, borderBottomWidth: 0 },
+                    headerTintColor: '#fff'
+                }}
+            />
+            <AppStack.Screen name="FinalResult" component={FinalResult} options={{ title: 'Final Result', headerLeft: () => null, headerShown: false }} />
         </AppStack.Navigator>
     );
 }
@@ -82,7 +99,6 @@ export default function AppNavigator() {
     );
 }
 
-// Temporary components to satisfy TS until we create files
 import { Text, Button } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -90,11 +106,9 @@ const PlaceholderHome = () => {
     const navigation = useNavigation<any>();
     const { profile } = useUserProfile(useAuth().user?.uid);
 
-    // Auto-redirect to ProfileSetup if new user
-    // Note: This might cause flicker, better to do in a wrapper, but OK for prototype
     React.useEffect(() => {
-        if (profile === null) { // loaded and explicitly null
-            // navigation.replace('ProfileSetup'); // commented out until implemented
+        if (profile === null) {
+
         }
     }, [profile]);
 
@@ -107,11 +121,3 @@ const PlaceholderHome = () => {
         </View>
     );
 }
-
-const PlaceholderProfile = () => <View><Text>Profile Setup</Text></View>;
-const PlaceholderCreate = () => <View><Text>Create Session</Text></View>;
-const PlaceholderJoin = () => <View><Text>Join Session</Text></View>;
-const PlaceholderLobby = () => <View><Text>Session Lobby</Text></View>;
-const PlaceholderRecs = () => <View><Text>Recommendations</Text></View>;
-const PlaceholderDetail = () => <View><Text>Detail</Text></View>;
-const PlaceholderResult = () => <View><Text>Result</Text></View>;

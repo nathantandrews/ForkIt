@@ -11,8 +11,7 @@ export function RestaurantList() {
     useEffect(() => {
         async function load() {
             try {
-                // const { lat, lon } = await getCurrentLocation(); // currently not working on my pc for some reason
-                const { lat, lon } = { lat: 33.650039, lon: -117.839058 }; // coords for UCI University Town Center
+                const { lat, lon } = { lat: 33.650039, lon: -117.839058 }; //coords for UCI University Town Center
                 const drafts = await fetchNearbyRestaurants(lat, lon);
                 setRestaurants(drafts);
             } catch (err: any) {

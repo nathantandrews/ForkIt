@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../utils/theme';
 
 interface Props {
-    selectedPrices: number[]; // Array of selected prices
+    selectedPrices: number[]; //array of selected prices
     onToggle: (price: number) => void;
 }
 
@@ -34,29 +35,30 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
+        gap: theme.spacing.sm,
     },
     option: {
         flex: 1,
-        paddingVertical: 15,
+        paddingVertical: theme.spacing.md,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 12,
-        backgroundColor: '#F2F2F7',
+        borderRadius: theme.radii.lg,
+        backgroundColor: theme.colors.surface,
         borderWidth: 1.5,
         borderColor: 'transparent',
     },
     optionSelected: {
-        backgroundColor: '#FFF8E1', // Light Gold/Yellow
-        borderColor: '#FFC107',
+        backgroundColor: theme.colors.primaryLight + '20',
+        borderColor: theme.colors.primary,
+        ...theme.shadows.sm,
     },
     text: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#8E8E93',
+        fontSize: theme.typography.sizes.lg,
+        fontWeight: theme.typography.weights.semibold,
+        color: theme.colors.textMuted,
     },
     textSelected: {
-        color: '#FF8F00',
-        fontWeight: '800',
+        color: theme.colors.primaryDark,
+        fontWeight: theme.typography.weights.bold,
     }
 });

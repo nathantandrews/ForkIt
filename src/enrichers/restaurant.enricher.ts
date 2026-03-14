@@ -9,13 +9,13 @@ export function enrichRestaurantDraft(
 ): RestaurantDraft {
     const { centerLat, centerLon } = options;
 
-    // parse hours
-    const openHours = 
+    //parse hours
+    const openHours =
         "openHoursRaw" in draft
             ? parseHoursString((draft as any).openHoursRaw ?? null)
             : draft.openHours;
 
-    // compute distance from center
+    //compute distance from center
     const distance = haversineDistance(
         centerLat,
         centerLon,

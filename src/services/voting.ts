@@ -49,7 +49,6 @@ export const subscribeToVotes = (sessionId: string, restaurantId: string, onUpda
     });
 };
 
-// NEW: Listen to all votes for the entire session efficiently
 export const subscribeToSessionVotes = (sessionId: string, onUpdate: (votes: Record<string, Vote>) => void) => {
     const colRef = collection(db, "sessions", sessionId, "votes");
     return onSnapshot(colRef, (snapshot) => {
@@ -62,11 +61,10 @@ export const subscribeToSessionVotes = (sessionId: string, onUpdate: (votes: Rec
 };
 
 export const finalizeSession = async (sessionId: string, restaurantId: string, restaurant: any) => {
-    // Clean the restaurant object by removing undefined values and converting to plain object
     const cleanRestaurant = JSON.parse(JSON.stringify(restaurant || {}));
-    
+
     console.log('Finalizing with cleaned restaurant:', cleanRestaurant);
-    
+
     await updateDoc(doc(db, "sessions", sessionId), {
         status: "finalized",
         finalizedRestaurantId: restaurantId,

@@ -1,12 +1,11 @@
-import { 
-    requestForegroundPermissionsAsync, 
-    getCurrentPositionAsync, 
-    LocationObject, 
-    LocationAccuracy 
+import {
+    requestForegroundPermissionsAsync,
+    getCurrentPositionAsync,
+    LocationObject,
+    LocationAccuracy
 } from 'expo-location';
 
 export async function getCurrentLocation(): Promise<{ lat: number; lon: number }> {
-    // Try Expo Location first (mobile)
     if (requestForegroundPermissionsAsync && getCurrentPositionAsync) {
         try {
             const { status } = await requestForegroundPermissionsAsync();
@@ -24,7 +23,6 @@ export async function getCurrentLocation(): Promise<{ lat: number; lon: number }
         }
     }
 
-    // Fallback to browser geolocation (desktop / unsupported)
     if (typeof navigator !== "undefined" && navigator.geolocation) {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -40,6 +38,5 @@ export async function getCurrentLocation(): Promise<{ lat: number; lon: number }
         };
     }
 
-    // Last-resort fallback
     throw new Error("Could not determine user location");
 }

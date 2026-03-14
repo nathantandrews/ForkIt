@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../utils/theme';
 
 interface Props {
-    value: number; // 1-10
+    value: number; //1-10
     onValueChange: (val: number) => void;
     label?: string;
 }
@@ -17,22 +18,23 @@ export default function WeightedSlider({ value, onValueChange, label }: Props) {
         if (value < 10) onValueChange(value + 1);
     };
 
-    // Calculate percentage for the visual bar (0% to 100%)
+    //calculate percentage for the visual bar (0% to 100%)
     const fillPercent = ((value - 1) / 9) * 100;
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.label}>{label || "Importance"}</Text>
-                <Text style={styles.value}>{value}/10</Text>
+                <Text style={styles.value}>{value}<Text style={styles.valueMax}>/10</Text></Text>
             </View>
 
             <View style={styles.controlsRow}>
                 {/* Left Arrow */}
-                <TouchableOpacity 
-                    style={[styles.button, value === 1 && styles.buttonDisabled]} 
+                <TouchableOpacity
+                    style={[styles.button, value === 1 && styles.buttonDisabled]}
                     onPress={handleDecrement}
                     disabled={value === 1}
+                    activeOpacity={0.7}
                 >
                     <Text style={[styles.buttonText, value === 1 && styles.textDisabled]}>◀</Text>
                 </TouchableOpacity>
@@ -45,10 +47,11 @@ export default function WeightedSlider({ value, onValueChange, label }: Props) {
                 </View>
 
                 {/* Right Arrow */}
-                <TouchableOpacity 
-                    style={[styles.button, value === 10 && styles.buttonDisabled]} 
+                <TouchableOpacity
+                    style={[styles.button, value === 10 && styles.buttonDisabled]}
                     onPress={handleIncrement}
                     disabled={value === 10}
+                    activeOpacity={0.7}
                 >
                     <Text style={[styles.buttonText, value === 10 && styles.textDisabled]}>▶</Text>
                 </TouchableOpacity>
@@ -64,79 +67,87 @@ export default function WeightedSlider({ value, onValueChange, label }: Props) {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 15,
-        marginBottom: 5,
+        marginTop: theme.spacing.md,
+        marginBottom: theme.spacing.xs,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        marginBottom: theme.spacing.sm,
         alignItems: 'center',
     },
     label: {
-        fontSize: 14,
-        color: '#333',
-        fontWeight: '600',
+        fontSize: theme.typography.sizes.md,
+        color: theme.colors.textMain,
+        fontWeight: theme.typography.weights.semibold,
     },
     value: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#007AFF',
+        fontSize: theme.typography.sizes.lg,
+        fontWeight: theme.typography.weights.black,
+        color: theme.colors.primary,
+    },
+    valueMax: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
     },
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 10,
+        gap: theme.spacing.md,
     },
     button: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F2F2F7',
+        width: 44,
+        height: 44,
+        borderRadius: theme.radii.round,
+        backgroundColor: theme.colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
+        ...theme.shadows.sm,
         borderWidth: 1,
-        borderColor: '#E5E5EA',
+        borderColor: theme.colors.border,
     },
     buttonDisabled: {
-        opacity: 0.3,
-        backgroundColor: '#fff',
+        backgroundColor: theme.colors.background,
+        borderColor: 'transparent',
+        shadowOpacity: 0,
+        elevation: 0,
     },
     buttonText: {
-        fontSize: 18,
-        color: '#007AFF',
-        fontWeight: 'bold',
-        marginTop: -2, // Center visually
+        fontSize: theme.typography.sizes.lg,
+        color: theme.colors.primary,
+        fontWeight: theme.typography.weights.bold,
     },
     textDisabled: {
-        color: '#999',
+        color: theme.colors.border,
     },
     barContainer: {
         flex: 1,
-        height: 40,
+        height: 44,
         justifyContent: 'center',
     },
     trackBackground: {
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#E5E5EA',
+        height: 10,
+        borderRadius: theme.radii.round,
+        backgroundColor: theme.colors.border,
         width: '100%',
         overflow: 'hidden',
     },
     trackFill: {
         height: '100%',
-        backgroundColor: '#007AFF',
-        borderRadius: 4,
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radii.round,
     },
     legend: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 4,
-        paddingHorizontal: 50, // Indent to align with bar starts
+        marginTop: theme.spacing.xs,
+        paddingHorizontal: 54,
     },
     legendText: {
-        fontSize: 10,
-        color: '#8E8E93',
+        fontSize: theme.typography.sizes.xs,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
     }
 });

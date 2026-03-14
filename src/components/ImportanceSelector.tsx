@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../utils/theme';
 
 interface Props {
     label: string;
-    value: number; // 1-10
+    value: number; //1-10
     onSelect: (val: number) => void;
 }
 
@@ -12,7 +13,7 @@ export default function ImportanceSelector({ label, value, onSelect }: Props) {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.label}>{label}</Text>
-                <Text style={styles.value}>{value}/10</Text>
+                <Text style={styles.value}>{value}<Text style={styles.valueMax}>/10</Text></Text>
             </View>
             <View style={styles.barContainer}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
@@ -41,46 +42,53 @@ export default function ImportanceSelector({ label, value, onSelect }: Props) {
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 20,
+        marginBottom: theme.spacing.xl,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        marginBottom: theme.spacing.sm,
+        alignItems: 'baseline',
     },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
+        fontSize: theme.typography.sizes.md,
+        fontWeight: theme.typography.weights.semibold,
+        color: theme.colors.textMain,
     },
     value: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#007AFF',
+        fontSize: theme.typography.sizes.lg,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.primary,
+    },
+    valueMax: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
     },
     barContainer: {
         flexDirection: 'row',
-        height: 30,
+        height: 32,
         gap: 4,
     },
     segment: {
         flex: 1,
-        backgroundColor: '#E5E5EA',
-        borderRadius: 4,
+        backgroundColor: theme.colors.border,
+        borderRadius: theme.radii.sm,
     },
     segmentActive: {
-        backgroundColor: '#4CD964', // Greenish
+        backgroundColor: theme.colors.primaryLight,
     },
     segmentCurrent: {
-        backgroundColor: '#34C759', // Darker green for the tip
+        backgroundColor: theme.colors.primary,
     },
     legend: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 4,
+        marginTop: theme.spacing.xs,
     },
     legendText: {
-        fontSize: 10,
-        color: '#8E8E93',
+        fontSize: theme.typography.sizes.xs,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
     }
 });

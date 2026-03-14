@@ -13,23 +13,25 @@ export async function fetchNearbyGeoapifyRestaurants(
     const gridSize = Math.ceil(radiusMeters / queryRadiusMeters);
     const stepMeters = queryRadiusMeters * Math.SQRT1_2;
     const offsets = generateOffsets(lat, lon, gridSize, stepMeters);
-    const results: GeoapifyRestaurant[] = [];
-    for (const point of offsets) {
+
+    const fetchCell = async (point: { lat: number; lon: number }): Promise<GeoapifyRestaurant[]> => {
         const url =
             `https://api.geoapify.com/v2/place-details?` +
             `lat=${point.lat}&` +
             `lon=${point.lon}&` +
-            `features=radius_${queryRadiusMeters}.restaurant,` + 
+            `features=radius_${queryRadiusMeters}.restaurant,` +
             `details,radius_${queryRadiusMeters}&` +
             `apiKey=${GEOAPIFY_KEY}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Geoapify request failed");
+        if (!res.ok) throw new Error(`Geoapify request failed: ${res.status}`);
         const json = await res.json();
-        const normalized = json.features
+        return json.features
             .filter(isRestaurant)
             .map(normalizeRestaurant);
-        results.push(...normalized);
-    }
+    };
+
+    const allResults = await Promise.all(offsets.map(fetchCell));
+    const results: GeoapifyRestaurant[] = allResults.flat();
 
     // deduplicate results
     const uniqueResults = Array.from(
@@ -37,6 +39,7 @@ export async function fetchNearbyGeoapifyRestaurants(
     );
     return uniqueResults;
 }
+
 
 function generateOffsets(lat: number, lon: number, gridSize = 1, stepMeters = 400) {
     const latStep = metersToLatDegrees(stepMeters);
@@ -56,11 +59,11 @@ function generateOffsets(lat: number, lon: number, gridSize = 1, stepMeters = 40
 function isRestaurant(feature: any): boolean {
     const p = feature.properties;
     if (
-        !p.name || 
+        !p.name ||
         p.name.trim() === "" ||
         !p.catering?.cuisine
-    ) { 
-        return false; 
+    ) {
+        return false;
     }
     return true;
 }

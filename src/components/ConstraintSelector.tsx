@@ -1,6 +1,6 @@
-
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { theme } from '../utils/theme';
 
 interface Props {
     options: string[];
@@ -49,64 +49,64 @@ export default function ConstraintSelector({ options, selected, onToggle, type }
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'column',
+        gap: theme.spacing.xs,
     },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        marginBottom: 8,
-        borderRadius: 12,
-        backgroundColor: '#F2F2F7',
-        borderWidth: 1,
+        paddingVertical: theme.spacing.md,
+        paddingHorizontal: theme.spacing.lg,
+        borderRadius: theme.radii.lg,
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1.5,
         borderColor: 'transparent',
     },
     label: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
+        fontSize: theme.typography.sizes.md,
+        color: theme.colors.textMain,
+        fontWeight: theme.typography.weights.medium,
     },
     checkbox: {
         width: 24,
         height: 24,
-        borderRadius: 6,
+        borderRadius: theme.radii.sm,
         borderWidth: 2,
-        borderColor: '#C7C7CC',
+        borderColor: theme.colors.border,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff'
+        backgroundColor: theme.colors.background,
     },
     checkmark: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: theme.typography.sizes.md,
+        fontWeight: theme.typography.weights.bold,
         marginTop: -2,
     },
-    // Dietary Styles
+    //dietary Styles
     rowSelectedDietary: {
-        backgroundColor: '#E8F5E9', // Light green
-        borderColor: '#4CAF50',
+        backgroundColor: theme.colors.success + '15',
+        borderColor: theme.colors.success,
     },
     labelSelectedDietary: {
-        color: '#2E7D32',
-        fontWeight: '600',
+        color: theme.colors.success,
+        fontWeight: theme.typography.weights.bold,
     },
     checkboxSelectedDietary: {
-        backgroundColor: '#4CAF50',
-        borderColor: '#4CAF50',
+        backgroundColor: theme.colors.success,
+        borderColor: theme.colors.success,
     },
-    // Allergy Styles
+    //allergy Styles
     rowSelectedAllergy: {
-        backgroundColor: '#FFEBEE', // Light red
-        borderColor: '#FF5252',
+        backgroundColor: theme.colors.error + '15',
+        borderColor: theme.colors.error,
     },
     labelSelectedAllergy: {
-        color: '#C62828',
-        fontWeight: '600',
+        color: theme.colors.error,
+        fontWeight: theme.typography.weights.bold,
     },
     checkboxSelectedAllergy: {
-        backgroundColor: '#FF5252',
-        borderColor: '#FF5252',
+        backgroundColor: theme.colors.error,
+        borderColor: theme.colors.error,
     },
 });

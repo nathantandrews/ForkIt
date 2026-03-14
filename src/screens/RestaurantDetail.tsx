@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../firebase/hooks';
 import { subscribeToSession, subscribeToMembers } from '../services/sessions';
 import { subscribeToVotes, castVote, finalizeSession } from '../services/voting';
 import { recommendRestaurants } from '../services/recommender';
 import { Vote, Session, SessionMember, RecommendationResult } from '../types/models';
+import { theme } from '../utils/theme';
 
 export default function RestaurantDetail() {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
+    const insets = useSafeAreaInsets();
     const { sessionId, restaurantId, restaurantData } = route.params;
     const { user } = useAuth();
 
@@ -32,7 +35,6 @@ export default function RestaurantDetail() {
     }, [sessionId, restaurantId]);
 
     useEffect(() => {
-        // Only fetch if we don't have restaurant data already
         if (!restaurantData && session && members.length > 0) {
             setLoading(true);
             const profiles = members.map(m => m.profileSnapshot);
@@ -54,7 +56,6 @@ export default function RestaurantDetail() {
     const handleVote = (type: 'approve' | 'veto') => {
         if (!user) return;
         const isCurrent = type === 'approve' ? vote.approvals.includes(user.uid) : vote.vetoes.includes(user.uid);
-        // toggle off if already selected
         castVote(sessionId, restaurantId, user.uid, isCurrent ? 'neutral' : type);
     };
 
@@ -66,7 +67,6 @@ export default function RestaurantDetail() {
         try {
             console.log('Finalizing session:', sessionId, 'with restaurant:', restaurantId);
             await finalizeSession(sessionId, restaurantId, rec.restaurant);
-            // Sub listener will redirect
         } catch (e: any) {
             console.error('Finalize error:', e?.code, e?.message, e);
             Alert.alert("Error", `Could not finalize: ${e?.message || 'Unknown error'}`);
@@ -74,13 +74,18 @@ export default function RestaurantDetail() {
     };
 
     if (loading) {
-        return <View style={styles.container}><ActivityIndicator size="large" /><Text style={{ marginTop: 10 }}>Loading...</Text></View>;
+        return (
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.loadingText}>Loading details...</Text>
+            </View>
+        );
     }
 
     if (!rec || !session) {
         return (
-            <View style={styles.container}>
-                <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', padding: 20 }}>
+            <View style={[styles.container, styles.centered]}>
+                <Text style={styles.errorText}>
                     Restaurant not found in recommendations.{'\n'}Please go back and try another option.
                 </Text>
             </View>
@@ -91,80 +96,267 @@ export default function RestaurantDetail() {
     const approvalCount = vote.approvals.length;
     const vetoCount = vote.vetoes.length;
     const memberCount = members.length;
+    const neutralCount = Math.max(0, memberCount - approvalCount - vetoCount);
 
     const canAutoFinalize = approvalCount >= Math.ceil(memberCount / 2) && vetoCount === 0;
 
     const myVote = vote.approvals.includes(user?.uid || "") ? 'approve' : vote.vetoes.includes(user?.uid || "") ? 'veto' : 'neutral';
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text style={styles.title}>{rec.restaurant.name}</Text>
-            <Text style={styles.tags}>{rec.restaurant.cuisines.join(", ")} • {'$'.repeat(rec.restaurant.priceTier)}</Text>
-
-            <View style={styles.scoreBox}>
-                <Text style={styles.scoreLbl}>Match Score</Text>
-                <Text style={styles.scoreVal}>{Math.round(rec.score)}</Text>
+        <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
+            <View style={styles.heroSection}>
+                <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{rec.restaurant.name}</Text>
+                <Text style={styles.tags}>
+                    {rec.restaurant.cuisines.join(", ")} • {'$'.repeat(rec.restaurant.priceTier)}{rec.restaurant.rating > 0 ? ` • ${rec.restaurant.rating}★` : ''}
+                </Text>
             </View>
 
-            <Text style={styles.sectionHeader}>Why it's a match:</Text>
-            <Text style={styles.explanation}>{rec.explanation}</Text>
-
-            <View style={styles.voteContainer}>
-                <Text style={styles.voteTitle}>Group Vote</Text>
-                <View style={styles.bars}>
-                    <View style={[styles.bar, { flex: approvalCount, backgroundColor: '#4caf50' }]} />
-                    <View style={[styles.bar, { flex: vetoCount, backgroundColor: '#f44336' }]} />
-                    <View style={[styles.bar, { flex: memberCount - approvalCount - vetoCount, backgroundColor: '#ddd' }]} />
+            <View style={styles.card}>
+                <View style={styles.scoreRow}>
+                    <View style={styles.scoreIconContainer}>
+                        <Text style={styles.scoreIcon}>⭐</Text>
+                    </View>
+                    <View>
+                        <Text style={styles.scoreLbl}>Match Score</Text>
+                        <Text style={styles.scoreVal}>{Math.round(rec.score)}%</Text>
+                    </View>
                 </View>
-                <Text style={styles.tally}>{approvalCount} Approvals • {vetoCount} Vetoes</Text>
+
+                <View style={styles.divider} />
+
+                <Text style={styles.sectionHeader}>Why it's a match</Text>
+                <Text style={styles.explanation}>{rec.explanation}</Text>
             </View>
 
-            <View style={styles.actions}>
-                <TouchableOpacity
-                    style={[styles.btn, styles.btnApprove, myVote === 'approve' && styles.btnActive]}
-                    onPress={() => handleVote('approve')}>
-                    <Text style={styles.btnText}>👍 Approve</Text>
-                </TouchableOpacity>
+            <View style={styles.card}>
+                <Text style={styles.sectionHeader}>Group Vote</Text>
 
-                <TouchableOpacity
-                    style={[styles.btn, styles.btnVeto, myVote === 'veto' && styles.btnActive]}
-                    onPress={() => handleVote('veto')}>
-                    <Text style={styles.btnText}>👎 Veto</Text>
-                </TouchableOpacity>
+                <View style={styles.barsContainer}>
+                    {approvalCount > 0 && <View style={[styles.bar, { flex: approvalCount, backgroundColor: theme.colors.success }]} />}
+                    {vetoCount > 0 && <View style={[styles.bar, { flex: vetoCount, backgroundColor: theme.colors.error }]} />}
+                    {neutralCount > 0 && <View style={[styles.bar, { flex: neutralCount, backgroundColor: theme.colors.border }]} />}
+                </View>
+
+                <View style={styles.tallyRow}>
+                    <Text style={styles.tallyApprove}>{approvalCount} Approvals</Text>
+                    <Text style={[styles.tallyNeutral, { flex: 1, textAlign: 'center' }]}>{neutralCount} Waiting</Text>
+                    <Text style={styles.tallyVeto}>{vetoCount} Vetoes</Text>
+                </View>
+
+                <View style={styles.actions}>
+                    <TouchableOpacity
+                        style={[styles.btn, styles.btnApprove, myVote === 'approve' && styles.btnActiveApprove]}
+                        activeOpacity={0.8}
+                        onPress={() => handleVote('approve')}>
+                        <Text style={[styles.btnText, myVote === 'approve' && styles.btnActiveText]}>
+                            {myVote === 'approve' ? "👍 Approved" : "👍 Approve"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.btn, styles.btnVeto, myVote === 'veto' && styles.btnActiveVeto]}
+                        activeOpacity={0.8}
+                        onPress={() => handleVote('veto')}>
+                        <Text style={[styles.btnText, myVote === 'veto' && styles.btnActiveText]}>
+                            {myVote === 'veto' ? "👎 Vetoed" : "👎 Veto"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {(isHost || canAutoFinalize) && (
-                <TouchableOpacity style={styles.finalizeBtn} onPress={handleFinalize}>
+                <TouchableOpacity
+                    style={[styles.finalizeBtn, canAutoFinalize ? styles.finalizeBtnReady : null]}
+                    activeOpacity={0.9}
+                    onPress={handleFinalize}
+                >
                     <Text style={styles.finalizeText}>
-                        {canAutoFinalize ? "Consensus reached! Finalize" : "Force Finalize"}
+                        {canAutoFinalize ? "🎉 Consensus Reached! Finalize" : "Force Finalize"}
                     </Text>
                 </TouchableOpacity>
             )}
 
-        </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: 'white' },
-    title: { fontSize: 32, fontWeight: 'bold' },
-    tags: { fontSize: 18, color: '#666', marginBottom: 20 },
-    scoreBox: { alignSelf: 'flex-start', backgroundColor: '#eef', padding: 15, borderRadius: 10, marginBottom: 20 },
-    scoreLbl: { fontSize: 12, color: '#55a', fontWeight: 'bold', textTransform: 'uppercase' },
-    scoreVal: { fontSize: 32, fontWeight: '900', color: '#007aff' },
-    sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-    explanation: { fontSize: 16, lineHeight: 24, marginBottom: 30 },
-    voteContainer: { padding: 20, backgroundColor: '#f9f9f9', borderRadius: 12, marginBottom: 20 },
-    voteTitle: { fontWeight: 'bold', marginBottom: 10 },
-    bars: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', marginBottom: 10 },
-    bar: { height: '100%' },
-    tally: { fontSize: 14, color: '#666', textAlign: 'center' },
-    actions: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-    btn: { flex: 1, padding: 15, borderRadius: 10, backgroundColor: '#eee', alignItems: 'center' },
-    btnApprove: { backgroundColor: '#e8f5e9' },
-    btnVeto: { backgroundColor: '#ffebee' },
-    btnActive: { borderWidth: 2, borderColor: '#333' },
-    btnText: { fontSize: 18, fontWeight: 'bold' },
-    finalizeBtn: { backgroundColor: '#333', padding: 15, borderRadius: 10, alignItems: 'center' },
-    finalizeText: { color: 'white', fontWeight: 'bold', fontSize: 16 }
+    container: {
+        flex: 1,
+        backgroundColor: theme.colors.surface,
+    },
+    centered: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: theme.spacing.md,
+        fontSize: theme.typography.sizes.md,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
+    },
+    errorText: {
+        fontSize: theme.typography.sizes.lg,
+        color: theme.colors.textMuted,
+        textAlign: 'center',
+        padding: theme.spacing.xl,
+        lineHeight: 28,
+    },
+    heroSection: {
+        backgroundColor: theme.colors.primary,
+        padding: theme.spacing.md,
+        paddingTop: theme.spacing.sm,
+        borderBottomLeftRadius: theme.radii.lg,
+        borderBottomRightRadius: theme.radii.lg,
+        marginBottom: theme.spacing.md,
+    },
+    title: {
+        fontSize: theme.typography.sizes.xl,
+        fontWeight: theme.typography.weights.black,
+        color: '#fff',
+        marginBottom: theme.spacing.xs,
+    },
+    tags: {
+        fontSize: theme.typography.sizes.sm,
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: theme.typography.weights.medium,
+    },
+    card: {
+        backgroundColor: theme.colors.background,
+        borderRadius: theme.radii.lg,
+        padding: theme.spacing.md,
+        marginHorizontal: theme.spacing.md,
+        marginBottom: theme.spacing.sm,
+        ...theme.shadows.sm,
+    },
+    scoreRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    scoreIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: theme.radii.round,
+        backgroundColor: theme.colors.primaryLight + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: theme.spacing.sm,
+    },
+    scoreIcon: {
+        fontSize: theme.typography.sizes.lg,
+    },
+    scoreLbl: {
+        fontSize: theme.typography.sizes.xs,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.bold,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 2,
+    },
+    scoreVal: {
+        fontSize: theme.typography.sizes.xl,
+        fontWeight: theme.typography.weights.black,
+        color: theme.colors.primaryDark,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: theme.colors.border,
+        marginVertical: theme.spacing.sm,
+    },
+    sectionHeader: {
+        fontSize: theme.typography.sizes.md,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.textMain,
+        marginBottom: theme.spacing.xs,
+    },
+    explanation: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.textMuted,
+        lineHeight: 20,
+    },
+    barsContainer: {
+        flexDirection: 'row',
+        height: 8,
+        borderRadius: theme.radii.round,
+        overflow: 'hidden',
+        marginTop: theme.spacing.xs,
+        marginBottom: theme.spacing.xs,
+        backgroundColor: theme.colors.border,
+    },
+    bar: {
+        height: '100%',
+    },
+    tallyRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: theme.spacing.md,
+    },
+    tallyApprove: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.success,
+        fontWeight: theme.typography.weights.bold,
+    },
+    tallyNeutral: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.textMuted,
+        fontWeight: theme.typography.weights.medium,
+    },
+    tallyVeto: {
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.error,
+        fontWeight: theme.typography.weights.bold,
+    },
+    actions: {
+        flexDirection: 'row',
+        gap: theme.spacing.md,
+    },
+    btn: {
+        flex: 1,
+        height: 44,
+        borderRadius: theme.radii.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    btnApprove: {
+        backgroundColor: theme.colors.success + '20',
+    },
+    btnVeto: {
+        backgroundColor: theme.colors.error + '20',
+    },
+    btnActiveApprove: {
+        borderColor: theme.colors.success,
+        backgroundColor: theme.colors.success,
+    },
+    btnActiveVeto: {
+        borderColor: theme.colors.error,
+        backgroundColor: theme.colors.error,
+    },
+    btnText: {
+        fontSize: theme.typography.sizes.sm,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.textMain,
+    },
+    btnActiveText: {
+        color: '#fff',
+    },
+    finalizeBtn: {
+        backgroundColor: theme.colors.textMain,
+        height: 48,
+        borderRadius: theme.radii.lg,
+        marginHorizontal: theme.spacing.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 'auto', // Pushes to bottom
+        ...theme.shadows.md,
+    },
+    finalizeBtnReady: {
+        backgroundColor: theme.colors.primary,
+    },
+    finalizeText: {
+        color: 'white',
+        fontWeight: theme.typography.weights.bold,
+        fontSize: theme.typography.sizes.md,
+    }
 });

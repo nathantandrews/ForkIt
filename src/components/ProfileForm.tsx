@@ -6,6 +6,7 @@ import CuisineSelector from './CuisineSelector';
 import ConstraintSelector from './ConstraintSelector';
 import PriceSelector from './PriceSelector';
 import WeightedSlider from './WeightedSlider';
+import { theme } from '../utils/theme';
 
 interface Props {
     initialProfile: UserProfile | null;
@@ -28,16 +29,16 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
             if (typeof safeTargetPrice === 'number') {
                 safeTargetPrice = [safeTargetPrice];
             } else if (!safeTargetPrice || safeTargetPrice.length === 0) {
-                safeTargetPrice = [2]; 
+                safeTargetPrice = [2];
             }
 
             setProfile({
                 ...DEFAULT_PROFILE,
                 ...initialProfile,
-                soft: { 
-                    ...DEFAULT_PROFILE.soft, 
+                soft: {
+                    ...DEFAULT_PROFILE.soft,
                     ...initialProfile.soft,
-                    targetPrice: safeTargetPrice 
+                    targetPrice: safeTargetPrice
                 },
                 weights: {
                     ...DEFAULT_PROFILE.weights,
@@ -68,13 +69,13 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
     const togglePrice = (price: number) => {
         setProfile(p => {
             const current = p.soft.targetPrice || [];
-            const updated = current.includes(price) 
-                ? current.filter(x => x !== price) 
+            const updated = current.includes(price)
+                ? current.filter(x => x !== price)
                 : [...current, price];
             return { ...p, soft: { ...p.soft, targetPrice: updated } };
         });
     };
-    
+
     const updateWeight = (field: 'cuisine' | 'price' | 'distance', value: number) => {
         setProfile(p => ({
             ...p,
@@ -88,9 +89,9 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                 <Text style={styles.screenTitle}>Your Food Profile</Text>
             </View>
 
-            <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
 
-                {/* 1) CUISINE PREFERENCES */}
+                {/*1. CUISINE PREFERENCES*/}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>🍽️</Text>
@@ -103,9 +104,9 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                         selectedCuisines={profile.soft.likedCuisines}
                         onToggle={updateLike}
                     />
-                    
+
                     <View style={styles.sliderContainer}>
-                        <WeightedSlider 
+                        <WeightedSlider
                             label="Importance (Cuisine)"
                             value={profile.weights.cuisine}
                             onValueChange={(v) => updateWeight('cuisine', v)}
@@ -115,7 +116,7 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 
                 <View style={styles.divider} />
 
-                {/* 2) PRICE PREFERENCE */}
+                {/*2. PRICE PREFERENCE*/}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>💸</Text>
@@ -124,13 +125,13 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                             <Text style={styles.sectionSubtitle}>Select all that apply</Text>
                         </View>
                     </View>
-                    <PriceSelector 
-                        selectedPrices={profile.soft.targetPrice || []} 
-                        onToggle={togglePrice} 
+                    <PriceSelector
+                        selectedPrices={profile.soft.targetPrice || []}
+                        onToggle={togglePrice}
                     />
 
                     <View style={styles.sliderContainer}>
-                        <WeightedSlider 
+                        <WeightedSlider
                             label="Importance (Budget)"
                             value={profile.weights.price}
                             onValueChange={(v) => updateWeight('price', v)}
@@ -139,8 +140,8 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                 </View>
 
                 <View style={styles.divider} />
-                
-                {/* 3) DISTANCE IMPORTANCE ONLY */}
+
+                {/*3. DISTANCE IMPORTANCE ONLY*/}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>🚗</Text>
@@ -149,9 +150,8 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
                             <Text style={styles.sectionSubtitle}>Closer is better</Text>
                         </View>
                     </View>
-                    
-                    {/* Just the slider, no generic selector */}
-                    <WeightedSlider 
+
+                    <WeightedSlider
                         label="Importance (Distance)"
                         value={profile.weights.distance}
                         onValueChange={(v) => updateWeight('distance', v)}
@@ -160,7 +160,7 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 
                 <View style={styles.divider} />
 
-                {/* 4) HARD CONSTRAINTS (Dietary/Allergies) */}
+                {/*4. HARD CONSTRAINTS (Dietary/Allergies)*/}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionIcon}>🥗</Text>
@@ -195,12 +195,13 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 
             </ScrollView>
 
-            {/* FLOATING SAVE BUTTON */}
+            {/*FLOATING SAVE BUTTON*/}
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
                     onPress={() => onSave(profile)}
                     disabled={loading}
+                    activeOpacity={0.8}
                 >
                     {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Profile</Text>}
                 </TouchableOpacity>
@@ -210,84 +211,90 @@ export default function ProfileForm({ initialProfile, onSave, loading }: Props) 
 }
 
 const styles = StyleSheet.create({
-    mainContainer: { flex: 1, backgroundColor: '#fff' },
-    container: { paddingHorizontal: 20 },
+    mainContainer: {
+        flex: 1,
+        backgroundColor: theme.colors.background
+    },
+    container: {
+        paddingHorizontal: theme.spacing.xl
+    },
+    scrollContent: {
+        paddingBottom: 140 //accommodate floating footer
+    },
     headerContainer: {
         paddingTop: 60,
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        backgroundColor: '#fff',
+        paddingBottom: theme.spacing.xl,
+        paddingHorizontal: theme.spacing.xl,
+        backgroundColor: theme.colors.background,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0'
+        borderBottomColor: theme.colors.border
     },
     screenTitle: {
-        fontSize: 28,
-        fontWeight: '800',
-        color: '#000',
+        fontSize: theme.typography.sizes.hero,
+        fontWeight: theme.typography.weights.black,
+        color: theme.colors.textMain,
     },
     section: {
-        marginTop: 30,
+        marginTop: theme.spacing.xxl,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: theme.spacing.lg,
     },
     sectionIcon: {
-        fontSize: 32,
-        marginRight: 15,
+        fontSize: theme.typography.sizes.xxl,
+        marginRight: theme.spacing.md,
     },
     sectionTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#000',
+        fontSize: theme.typography.sizes.xl,
+        fontWeight: theme.typography.weights.bold,
+        color: theme.colors.textMain,
     },
     sectionSubtitle: {
-        fontSize: 14,
-        color: '#666',
+        fontSize: theme.typography.sizes.sm,
+        color: theme.colors.textMuted,
         marginTop: 2,
     },
     sliderContainer: {
-        marginTop: 15,
-        paddingTop: 15,
+        marginTop: theme.spacing.md,
+        paddingTop: theme.spacing.md,
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
+        borderTopColor: theme.colors.border,
     },
     divider: {
         height: 1,
-        backgroundColor: '#E5E5EA',
-        marginVertical: 10,
-        marginTop: 30,
+        backgroundColor: theme.colors.border,
+        marginVertical: theme.spacing.sm,
+        marginTop: theme.spacing.xxl,
     },
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        padding: 20,
-        paddingBottom: 40,
-        backgroundColor: 'rgba(255,255,255,0.9)',
+        padding: theme.spacing.xl,
+        paddingBottom: theme.spacing.xxl,
+        backgroundColor: 'rgba(255,255,255,0.95)',
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
+        borderTopColor: theme.colors.border,
     },
     saveBtn: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 16,
-        borderRadius: 16,
+        backgroundColor: theme.colors.primary,
+        paddingVertical: theme.spacing.md + 2,
+        borderRadius: theme.radii.lg,
         alignItems: 'center',
-        shadowColor: "#007AFF",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        ...theme.shadows.md,
     },
     saveBtnDisabled: {
-        backgroundColor: '#A0C4FF',
+        backgroundColor: theme.colors.border,
         shadowOpacity: 0,
+        elevation: 0,
     },
     saveBtnText: {
         color: 'white',
-        fontWeight: '700',
-        fontSize: 18,
+        fontWeight: theme.typography.weights.bold,
+        fontSize: theme.typography.sizes.lg,
+        letterSpacing: 0.5,
     }
 });
