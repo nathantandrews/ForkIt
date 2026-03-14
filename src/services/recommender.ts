@@ -277,7 +277,7 @@ export const recommendRestaurants = async (
         const rating = r.rating;
         let ratingBonus = 0;
         if (rating && rating > 0) {
-            ratingBonus = rating * 2;
+            ratingBonus = rating * 0.5;
             if (rating >= 4.5) positiveReasons.add(`Highly rated (${rating}★)`);
         }
 
