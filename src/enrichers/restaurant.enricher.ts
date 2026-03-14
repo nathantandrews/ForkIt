@@ -1,7 +1,7 @@
 import { RestaurantDraft } from "../types/models";
 import { haversineDistance } from "../utils/restaurant/geo";
 import { parseHoursString } from "../utils/restaurant/hours";
-
+import { parseRating } from "../utils/restaurant/rating";
 
 export function enrichRestaurantDraft(
     draft: RestaurantDraft,
@@ -22,9 +22,11 @@ export function enrichRestaurantDraft(
         draft.location.lat,
         draft.location.lon
     );
+    const rating = parseRating();
     return {
         ...draft,
         openHours,
         distance,
+        rating,
     };
 }
