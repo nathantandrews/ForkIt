@@ -2,6 +2,7 @@ import { Restaurant, SessionContext, UserProfile, RecommendationResult, Restaura
 
 import { fetchNearbyRestaurants } from './restaurant';
 import { enrichRestaurantDraft } from '../enrichers/restaurant.enricher';
+import { fetchYelpRating } from './yelp/yelp';
 
 // Convert RestaurantDraft to Restaurant format
 const draftToRestaurant = (draft: RestaurantDraft, index: number): Restaurant => ({
@@ -319,8 +320,35 @@ export const recommendRestaurants = async (
         };
     });
 
-    // Sort by score descending
-    const sorted = scored.sort((a, b) => b.score - a.score).slice(0, 25);
+    // Sort by score descending — take top 25 candidates for Yelp enrichment
+    const preSorted = scored.sort((a, b) => b.score - a.score).slice(0, 25);
+
+    // Fetch real Yelp ratings for only these top candidates (≤25 API calls)
+    const yelpRatings = await Promise.all(
+        preSorted.map(item =>
+            fetchYelpRating(
+                item.restaurant.name,
+                item.restaurant.location.lat,
+                item.restaurant.location.lng
+            )
+        )
+    );
+
+    // Adjust each candidate's score with the real Yelp rating where available
+    const sorted = preSorted
+        .map((item, i) => {
+            const yelpRating = yelpRatings[i];
+            if (!yelpRating) return item;
+            const newBonus = yelpRating * 0.5;
+            const scoreDelta = newBonus - item.breakdown.ratingBonus;
+            return {
+                ...item,
+                score: item.score + scoreDelta,
+                breakdown: { ...item.breakdown, ratingBonus: newBonus },
+                restaurant: { ...item.restaurant, rating: yelpRating },
+            };
+        })
+        .sort((a, b) => b.score - a.score);
 
     console.log('Top 5 raw scores:', sorted.slice(0, 5).map(s => ({
         name: s.restaurant.name,
